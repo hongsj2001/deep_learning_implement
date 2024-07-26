@@ -1,14 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from AlexNet import AlexNet
-from AlexNet2 import AlexNet2
 import torch
 import torch.nn as nn
 from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 import torchvision.models as models
-from common.util import smooth_curve
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
