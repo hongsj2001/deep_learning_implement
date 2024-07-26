@@ -57,7 +57,7 @@ class AlexNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.layer5(out)
-        out = torch.flatten(out, 1) #
+        out = torch.flatten(out, 1) #평탄화 수행 (1x9216)로 변환
         out = self.fc1(out)
         out = self.fc2(out)
         out = self.fc3(out)
