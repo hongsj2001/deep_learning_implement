@@ -9,14 +9,10 @@ from torch.utils.data.sampler import SubsetRandomSampler
 import torchvision.models as models
 
 # Device configuration
+print(torch.cuda.is_available())
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def get_train_valid_loader(data_dir,
-                           batch_size,
-                           augment,
-                           random_seed,
-                           valid_size=0.1,
-                           shuffle=True):
+def get_train_valid_loader(data_dir, batch_size, augment, random_seed, valid_size=0.1, shuffle=True):
     normalize = transforms.Normalize(
         mean=[0.4914, 0.4822, 0.4465],
         std=[0.2023, 0.1994, 0.2010],
@@ -100,21 +96,29 @@ def get_test_loader(data_dir,
 
     return data_loader
 
+#옵션 선택 (제작중)
+'''
+parser = OptionParser()
+parser.add_option("-s", "--seed", default=0, help="the random seed", action="store", type="int", dest="seed")
+parser.add_option("-ㅣ", "--load", default=False, help="Load Data", action="store", type="bool", dest="load")
+
+(options, args) = parser.parse_args()
+'''
+
+
 # CIFAR10 dataset 
-train_loader, valid_loader = get_train_valid_loader(data_dir = './data',batch_size = 64,augment = False,random_seed = 1)
+train_loader, valid_loader = get_train_valid_loader(data_dir = './data',batch_size = 64, augment = False, random_seed = 1)
 
 test_loader = get_test_loader(data_dir = './data', batch_size = 64)
 
 num_classes = 10
 num_epochs = 50
-batch_size = 64
+batch_size = 128
 learning_rate = 0.005
 
 model1 = AlexNet(num_classes).to(device)
-model2 = AlexNet2(num_classes).to(device)
 
 train_acc1 = []
-train_acc2 = []
 
 #모델 불러오기
 
@@ -128,7 +132,6 @@ model.load_state_dict(torch.load(PATH))
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer1 = torch.optim.SGD(model1.parameters(), lr=learning_rate, weight_decay = 0.005, momentum = 0.9)
-optimizer2 = torch.optim.SGD(model2.parameters(), lr=learning_rate, weight_decay = 0.005, momentum = 0.9)  
 
 # Train the model
 total_step = len(train_loader)
@@ -147,21 +150,10 @@ for epoch in range(num_epochs):
         optimizer1.zero_grad()
         loss1.backward()
         optimizer1.step()
-        
-        # Forward pass
-        outputs2 = model2(images)
-        loss2 = criterion(outputs2, labels)
-        
-        # Backward and optimiz
-        optimizer2.zero_grad()
-        loss2.backward()
-        optimizer2.step()
 
 
     print ('Model1: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                    .format(epoch+1, num_epochs, i+1, total_step, loss1.item()))
-    print ('Model2: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
-                   .format(epoch+1, num_epochs, i+1, total_step, loss2.item()))
             
     # Validation
     with torch.no_grad():
@@ -178,19 +170,13 @@ for epoch in range(num_epochs):
             total1 += labels.size(0)
             correct1 += (predicted1 == labels).sum().item()
 
-            outputs2 = model2(images)
-            _, predicted2 = torch.max(outputs2.data, 1)
-            total2 += labels.size(0)
-            correct2 += (predicted2 == labels).sum().item()
+    
 
-            del images, labels, outputs1, outputs2
+            del images, labels, outputs1
     
         print('Accuracy of the Model1 on the {} validation images: {} %'.format(5000, 100 * correct1 / total1))
-        print('Accuracy of the Model2 on the {} validation images: {} %'.format(5000, 100 * correct2 / total2))
         train_acc1.append(100 * correct1 / total1)
-        train_acc2.append(100 * correct2 / total2)
         print(train_acc1)
-        print(train_acc2)
 
 #torch.save(model.state_dict(), PATH)
 
@@ -198,17 +184,16 @@ for epoch in range(num_epochs):
 
 '''
 #모델 성능이 괜찮다면 추후에 다시 사용하기 위해서 모델을 저장할 수 있음 
-model = models.vgg16(pretrained=True)
+# odels.vgg16(pretrained=True)
 torch.save(model.state_dict(), 'model_weights.pth')
 
-model = models.vgg16() # 기본 가중치를 불러오지 않으므로 pretrained=True를 지정하지 않음
+
 model.load_state_dict(torch.load('model_weights.pth'))
 model.eval()
 '''
 
 x = np.arange(num_epochs)
 plt.plot(x, train_acc1, marker="x", markevery=100, label="Relu")
-plt.plot(x, train_acc2, marker="o", markevery=100, label="Tanh")
 plt.xlabel("epoch")
 plt.ylabel("acurracy(%)")
 plt.ylim(0, 100)
