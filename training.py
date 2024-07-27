@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from AlexNet import AlexNet
+from model import *
 import torch
 import torch.nn as nn
 from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
-import torchvision.models as models
 
 # Device configuration
 print(torch.cuda.is_available())
@@ -99,9 +98,10 @@ def get_test_loader(data_dir,
 #옵션 선택 (제작중)
 '''
 parser = OptionParser()
-parser.add_option("-s", "--seed", default=0, help="the random seed", action="store", type="int", dest="seed")
-parser.add_option("-ㅣ", "--load", default=False, help="Load Data", action="store", type="bool", dest="load")
-
+parser.add_option("-s", "--seed", default=1, help="the random seed", action="store", type="int", dest="seed")
+parser.add_option("-l", "--load", default=False, help="Load weight", action="store", type="bool", dest="load")
+parser.add_option("-d", "--load", default=False, help="Select dataset", action="store", type="str", dest="load")
+parser.add_option("-t", "--load", default=True, help="Load data", action="store", type="bool", dest="load")
 (options, args) = parser.parse_args()
 '''
 
