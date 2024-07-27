@@ -5,7 +5,6 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #학습을 gpu가 진행하도록 설정
 
