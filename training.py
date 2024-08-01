@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from model import *
 import torch
 import torch.nn as nn
@@ -7,24 +8,17 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 from optparse import OptionParser
-
+from datetime import datetime
 
 #TODO : Json 파일로 loss와 Weight을 저장
 
-# Device configuration
-print(torch.cuda.is_available())
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#폴더 생성하는 함수
+def makedirs(path):
+    if not os.path.exists(path): #해당 폴더가 존재하지 않을 경우만 생성
+        os.makedirs(path)
 
-def get_data(data_dir, batch_size, transform , random_seed, valid_size=0.25, shuffle=True):
-    '''
-    # define transforms
-    valid_transform = transforms.Compose([
-            transforms.Resize((227,227)),
-            transforms.ToTensor(),
-            normalize,
-    ])
-    '''
-
+#데이터를 불러오는 함수 (수정필요)
+def get_data(dataset, data_dir, batch_size, transform , random_seed, valid_size=0.25, shuffle=True):
     # load the dataset
     train_dataset = datasets.CIFAR10(
         root=data_dir, train=True,
@@ -71,26 +65,50 @@ def get_data(data_dir, batch_size, transform , random_seed, valid_size=0.25, shu
     )
     return (train_loader, valid_loader, test_loader)
 
-#옵션 선택 (제작중)
 
+# Device configuration
+print(torch.cuda.is_available())
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+#옵션 선택
 parser = OptionParser()
-parser.add_option("-s", "--seed", default=1, help="the random seed", action="store", type="int", dest="seed")
-parser.add_option("-a", "--aug", default='True', help="the random seed", action="store", type="str", dest="aug")
-#parser.add_option("-l", "--load", default=False, help="Load weight", action="store", type="str", dest="load")
-parser.add_option("-d", "--data", default="Cifar10", help="Select dataset : Cifar10", action="store", type="string", dest="dataset")
-parser.add_option("-m", "--model", default="AlexNetCifar10", help="Select models : AlexNet, VGG", action="store", type="string", dest="model")
+parser.add_option("-s", "--seed", default=1, help="The random seed", action="store", type="int", dest="seed") #Define random seed (Defalut : 1)
+parser.add_option("-a", "--aug", default='False', help="Data augmentation", action="store", type="str", dest="aug") #Data Augmentation (Defalut : False)
+parser.add_option("-d", "--data", default="Cifar10", help="Select dataset : Cifar10", action="store", type="string", dest="dataset") #Dataset (Defalut : Cifar 10)
+parser.add_option("-m", "--model", default="AlexNet", help="Select models : AlexNet, VGG, AlexNetCifar10, VGGCifar10", action="store", type="string", dest="model") #Model (Defalut : AlexNet)
+parser.add_option("-e", "--epoch", default=20, help="Epoch", action="store", type="int", dest="epoch") #Epoch (defalut : 20)
+parser.add_option("-b", "--batch", default=256, help="Batch size", action="store", type="int", dest="batch") #Batch Size (Defalut : 256)
+parser.add_option("-r", "--learningrate", default=0.005, help="Learning rate", action="store", type="float", dest="learningRate") #Learning Rate (defalut : 0.005)
+parser.add_option("-t", "--transform", default='False', help="Transform data size (defalut : False) : if you choose this option, cifar 10 dataset image size will be 227x227", action="store", type="string", dest="transform") #Transform data size (defalut : False)
+parser.add_option("-l", "--load", default='False', help="Load model", action="store", type="string", dest="load") #Load Data (defalut : False)
+parser.add_option("-o", "--optimizer", default='SGD', help="select optimizer : SGD, Momentum, RMSProp, Adagrad, Adam ... (Defalut : SGD)", action="store", type="string", dest="load") #Load Data (defalut : False)
 (options, args) = parser.parse_args()
 
 
-print('ARG Model', options.model)
-print('ARG Augment', options.aug)
+print('ARG seed', options.seed)
+print('ARG aug', options.aug)
+print('ARG data', options.data)
+print('ARG model', options.model)
+print('ARG epoch', options.epoch)
+print('ARG batch size', options.batch)
+print('ARG learning rate', options.learningrate)
+print('ARG transform', options.transform)
+
+transform_train = transforms.Compose([
+    transforms.Resize(256),
+    transforms.RandomCrop(224),
+    transforms.RandomHorizontalFlip(),
+    PCANoisePIL(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
+])
 
 normalize = transforms.Normalize(
         mean=[0.4914, 0.4822, 0.4465],
         std=[0.2023, 0.1994, 0.2010],
     )
-
-if options.aug == 'True':
+if options.transform == 'True':
     transform = transforms.Compose([
             transforms.Resize((227,227)),
             transforms.ToTensor(),
@@ -104,47 +122,43 @@ else:
     ])
     num_classes = 10
 
+num_epochs = options.epoch
+batch_size = options.batch
+learning_rate = options.learningrate
 
-
-num_epochs = 20
-batch_size = 256
-learning_rate = 0.005
-
-
-
-if options.model == 'AlexNetCifar10':
+#모델 선택
+if options.model == 'AlexNet':
+    model = AlexNetCifar10(num_classes).to(device)
+    modelName = 'AlexNet'
+elif options.model == 'AlexNetCifar10':
     model = AlexNetCifar10(num_classes).to(device)
     modelName = 'AlexNetCifar10'
-elif options.model == 'VggNetCifar10':
-    model = VggNetCifar10(num_classes).to(device)
-    modelName = 'VggNetCifar10'
 elif options.model == 'VggNet':
     model = VggNet(num_classes).to(device)
     modelName = 'VggNet'
+elif options.model == 'VggNetCifar10':
+    model = VggNetCifar10(num_classes).to(device)
+    modelName = 'VggNetCifar10'
 
-
-
-
-
+#현재 시간
+time = datetime.now()
+savefolder = f'./checkpoint/{modelName}/{time}'
+makedirs(savefolder)
 
 # CIFAR10 dataset 
 train_loader, valid_loader, test_loader = get_data(data_dir = './data',batch_size = batch_size, transform=transform,random_seed = 1)
 
 
-train_acc = []
-
 #모델 불러오기
-
-'''
 PATH = 'c:/Users/hong/workspace/deep_learnig_from_scratch/model_weights.pth'
-model = AlexNet(num_classes).to(device)
+model = VggNetCifar10(num_classes).to(device)
 model.load_state_dict(torch.load(PATH))
-'''
 
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay = 0.005, momentum = 0.9)
+
 
 # Train the model
 total_step = len(train_loader)
@@ -191,12 +205,13 @@ for epoch in range(num_epochs):
         train_acc.append(100 * correct / total)
         print(train_acc)
     
-    checkpoint_path = f'./checkpoint/{modelName}/checkpoint_epoch_{epoch + 1}.pth'
+    checkpoint_path = savefolder + f'/checkpoint_epoch_{epoch + 1}.pth'
     torch.save(model.state_dict(), checkpoint_path)
     print(f'Checkpoint saved at epoch {epoch + 1}')
 
 # Test
 with torch.no_grad():
+    model.eval()
     correct = 0
     total = 0
     for images, labels in test_loader:

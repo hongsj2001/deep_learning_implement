@@ -115,39 +115,7 @@ class AlexNetCifar10(nn.Module):
         out = self.fc3(out)
         return out
     
-
-#참고용
-class KantapiaNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 48, 5)  # 입력 채널 3, 출력 채널 6, 커널 크기 5인 첫 번째 합성곱 층
-        self.pool = nn.MaxPool2d(3, 2, 1)  # 커널 크기 2, 스트라이드 2인 최대 풀링 층
-        self.conv2 = nn.Conv2d(48, 128, 3, padding='same')  # 입력 채널 6, 출력 채널 16, 커널 크기 5인 두 번째 합성곱 층
-        self.pool2 = nn.MaxPool2d(2, 2)
-        self.conv3 = nn.Conv2d(128, 192, 3, padding='same')
-        self.conv4 = nn.Conv2d(192, 192, 3, padding='same')
-        self.pool3 = nn.MaxPool2d(3, 2)
-        self.conv5 = nn.Conv2d(192, 128, 1, padding='same')
-        self.fc1 = nn.Linear(1152, 512)  # 첫 번째 완전 연결 층
-        self.fc2 = nn.Linear(512, 256)  # 두 번째 완전 연결 층
-        self.fc3 = nn.Linear(256, 10)  # 출력 층 (클래스 개수 10)
-        # TODO: padding=same 의 역할 알아오기 : 입/출력의 크기를 동일하도록 패딩 수행
-    def forward(self, x):
-        x = self.pool(nn.relu(self.conv1(x)))  # 첫 번째 합성곱 후 ReLU 활성화 함수, 풀링 적용
-        x = self.pool2(nn.relu(self.conv2(x)))  # 두 번째 합성곱 후 ReLU 활성화 함수, 풀링 적용
-        x = nn.relu(self.conv3(x))
-        x = nn.relu(self.conv4(x))
-        x = self.pool3(x)
-        x = nn.relu(self.conv5(x))
-
-        x = torch.flatten(x, 1)  # 배치 차원 제외 모든 차원을 평탄화
-        x = nn.relu(self.fc1(x))  # 첫 번째 완전 연결 층 후 ReLU 활성화 함수 적용
-        x = nn.relu(self.fc2(x))  # 두 번째 완전 연결 층 후 ReLU 활성화 함수 적용
-        x = self.fc3(x)  # 출력 층
-        return x
-    
-
-#VGG-16 
+#Basic VGG-16 
 class VggNet(nn.Module):
     def __init__(self, num_classes=1000):
         super(VggNet, self).__init__()
