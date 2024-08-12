@@ -519,20 +519,20 @@ class ResNet(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-def resnet18(num_classes):
-    return ResNet(BasicBlock, [2,2,2,2], num_classes)
+    def resnet18(num_classes):
+        return ResNet(BasicBlock, [2,2,2,2], num_classes)
 
-def resnet34(num_classes):
-    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes)
+    def resnet34(num_classes):
+        return ResNet(BasicBlock, [3, 4, 6, 3], num_classes)
 
-def resnet50(num_classes):
-    return ResNet(BottleNeck, [3,4,6,3], num_classes)
+    def resnet50(num_classes):
+        return ResNet(BottleNeck, [3,4,6,3], num_classes)
 
-def resnet101(num_classes):
-    return ResNet(BottleNeck, [3, 4, 23, 3], num_classes)
+    def resnet101(num_classes):
+        return ResNet(BottleNeck, [3, 4, 23, 3], num_classes)
 
-def resnet152(num_classes):
-    return ResNet(BottleNeck, [3, 8, 36, 3], num_classes)
+    def resnet152(num_classes):
+        return ResNet(BottleNeck, [3, 8, 36, 3], num_classes)
 
 
 '''
